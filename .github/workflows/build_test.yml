@@ -1,50 +1,82 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# This workflow will do a clean installation of node dependencies, cache/restore them,
+# build the source code, and run tests across different versions of Node.js.
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
 
 name: Build and Test
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master" ]  # Trigger workflow when pushing to the master branch
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master" ]  # Trigger workflow on pull requests targeting the master branch
 
 jobs:
+  # First job: Security test
+  # This job runs security tests and audits to check for vulnerabilities in the code.
   security_test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # The job will run on an Ubuntu-based environment
 
     steps:
-    - name: This checkout clone the github repository on the machine
-      uses: actions/checkout@v4
-    - name: Use Node.js v18.19.1
-      uses: actions/setup-node@v4
-      with:
-        node-version: 18.19.1
-        cache: 'npm'
-    - name: Install programm dependencies
-      run: npm install
-    - name: Start the app -> & makes the process background mode
-      run: npm run start &
-    - name: Run integration tests
-      run: npm audit
+    # Step 1: Checkout repository
+    # This step clones the repository from GitHub to the runner's local machine
+    - name: Checkout the repository on the machine
+      uses: actions/checkout@v4  # GitHub action to checkout the code into the runner
 
+    # Step 2: Set up Node.js
+    # This step sets up Node.js version 18.19.1 on the runner and configures npm caching
+    - name: Use Node.js v18.19.1
+      uses: actions/setup-node@v4  # Action to set up Node.js on the runner
+      with:
+        node-version: 18.19.1  # Specifies the version of Node.js to use
+        cache: 'npm'  # Enables npm dependency caching for faster builds in future runs
+
+    # Step 3: Install dependencies
+    # This installs the necessary dependencies from the package.json file
+    - name: Install program dependencies
+      run: npm install  # Installs the project dependencies listed in package.json
+
+    # Step 4: Start the app (background mode)
+    # This runs the app in the background (with &) so that the workflow can continue with the next steps
+    - name: Start the app (runs in background)
+      run: npm run start &  # Starts the app in the background to allow other steps to run concurrently
+
+    # Step 5: Run security checks
+    # This runs the npm audit command to check for vulnerabilities in the installed dependencies
+    - name: Run security integration tests
+      run: npm audit  # Runs npm audit to check for known security issues in the dependencies
+
+  # Second job: Build and Test
+  # This job will build the application and run the integration tests.
+  # It depends on the successful completion of the security_test job (due to `needs: security_test`).
   build_test:
-    runs-on: ubuntu-latest
-    needs: security_test # I specify that in order to run this test i need security test first
+    runs-on: ubuntu-latest  # This job will run on an Ubuntu-based environment
+    needs: security_test  # Ensures that the security_test job is finished before this job starts
 
     steps:
-    - name: This checkout clone the github repository on the machine
-      uses: actions/checkout@v4
-    - name: Use Node.js v18.19.1
-      uses: actions/setup-node@v4
-      with:
-        node-version: 18.19.1
-        cache: 'npm'
-    - name: Install programm dependencies
-      run: npm install
-    - name: Start the app -> & makes the process background mode
-      run: npm run start &
-    - name: Run integration tests
-      run: npm run test
+    # Step 1: Checkout repository
+    # This step clones the repository from GitHub again, as each job runs in a separate environment
+    - name: Checkout the repository on the machine
+      uses: actions/checkout@v4  # Clones the GitHub repository to the runner's machine
 
-  
+    # Step 2: Set up Node.js
+    # This step sets up Node.js version 18.19.1 on the runner again for this job
+    - name: Use Node.js v18.19.1
+      uses: actions/setup-node@v4  # Configures Node.js and npm on the runner
+      with:
+        node-version: 18.19.1  # Specifies the Node.js version for this job
+        cache: 'npm'  # Enables caching of npm dependencies for faster builds
+
+    # Step 3: Install dependencies
+    # This installs the required dependencies listed in the package.json file for the build and test steps
+    - name: Install program dependencies
+      run: npm install  # Installs dependencies for this job
+
+    # Step 4: Start the app (background mode)
+    # This runs the app in the background again so the tests can be executed while the app is running
+    - name: Start the app (runs in background)
+      run: npm run start &  # Starts the app in the background for testing
+
+    # Step 5: Run tests
+    # This step runs the integration tests to verify that the application is working as expected
+    - name: Run integration tests
+      run: npm run test  # Executes the integration tests using the npm run test command
