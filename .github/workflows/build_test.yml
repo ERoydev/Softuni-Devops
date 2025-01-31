@@ -23,5 +23,7 @@ jobs:
         cache: 'npm'
     - name: Install programm dependencies
       run: npm install
+    - name: Start the app -> & makes the process background mode
+      run: npm run start &
     - name: Run integration tests
       run: npm run test
